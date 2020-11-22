@@ -1,5 +1,7 @@
 # OSU2CH
 
+This is a python script used to convert OSU maps into CloneHero charts.
+
 Right now the program only runs from an IDE.
 You need to have installed FFmpeg and the python libraries pydub, tkinter and shutil for it to work.
 Additionally you need to uncompress the .osz file before you're able to use the script.
