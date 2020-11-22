@@ -12,11 +12,17 @@ Every map is made as a different CH song because you can't correlate the number 
 
 
 Known issues:
+
 -Synchronization can be way off depeding on the OSU map
+
 -Sliders and Spinners are converted into a single note as opposed to a long note
 
 Plans for the future:
+
 -Fix synchronization
+
 -Convert sliders and spinners into long notes
+
 -Implement a second mapping option that orders notes differently
+
 -Make an installer(i doubt i'll be able to do this one)
