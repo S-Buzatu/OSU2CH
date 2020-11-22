@@ -1,11 +1,14 @@
 #OSU2CH v0.1
 #Check this for slider calculations https://osu.ppy.sh/community/forums/topics/606522
 #Slider duration (600* sliderlength)/(slidervelocity*bpm) ; 600* sliderlength * beatduration/slidervelocity
+#Formula translation from time to CH position. coef=768/beatLength. pos=coef*time. You fogot to account for the offset dumbass
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from pydub import AudioSegment
 from shutil import copyfile
+
+timing_point_list = []
 
 root = tk.Tk()
 root.withdraw()
@@ -15,8 +18,16 @@ if not os.path.exists(osu_folder_path + " CH"):
         os.makedirs(osu_folder_path + " CH")
 ch_folder_path = osu_folder_path + " CH"
 read_objects = 0
+read_timing = 0
+timing_point_number = 1
 #osu_file_path = filedialog.askopenfilename()
 #song_file_path = filedialog.askopenfilename()
+
+class Timingpoint:
+    time=0
+    beat_length=0
+
+
 
 for entry in os.listdir(osu_folder_path):
     if os.path.isfile(os.path.join(osu_folder_path, entry)):
@@ -107,13 +118,25 @@ for entry in os.listdir(osu_folder_path):
                     chart.write("[SyncTrack]\n")
                     chart.write("{\n")
                     chart.write("  0 = TS 4\n")
-                    chart.write("  0 = B 170000\n")
+                    chart.write("  0 = B 200000\n")
                     chart.write("}\n")
                     chart.write("[Events]\n")
                     chart.write("{\n")
                     chart.write("}\n")
-                    continue
 
+                    if read_timing:
+                        words = line.split(",")
+                        if words[0] != '\n':
+                            if int(words[1]) > 0:
+                                x=Timingpoint
+                                x.time=int(words[0])
+                                x.beat_length=float(words[1])
+                                timing_point_list.append(x)
+                        else:
+                            read_timing=0
+                 
+
+                
                 #Add notes
                 result = line.find("HitObjects")
                 if result > -1:
@@ -127,9 +150,18 @@ for entry in os.listdir(osu_folder_path):
                         lane = int(int(words[0])/102)
                         if lane == 5:
                             lane=lane-1
-                        position = str(round(int(words[2])*0.5441))
-                        newline = "  "+position+" = N "+str(lane)+" 0\n"
-                        chart.write(newline)
+                        #position = str(round(int(words[2])*0.5441))
+                        if (int(words[2]) >= timing_point_list[len(timing_point_list)-1].time) | timing_point_list[timing_point_number].time <= int(words[2]) & int(words[2]) < timing_point_list[timing_point_number+1].time :
+                            coef = 768/timing_point_list[timing_point_number].beat_length
+                            position = coef * int(words[2])
+                            newline = "  "+position+" = N "+str(lane)+" 0\n"
+                            chart.write(newline)
+                        else :
+                            timing_point_number += 1
+                            coef = 768/timing_point_list[timing_point_number].beat_length
+                            position = coef * int(words[2])
+                            newline = "  "+position+" = N "+str(lane)+" 0\n"
+                            chart.write(newline)
             chart.write("}\n")
             r.close()
             chart.close()
