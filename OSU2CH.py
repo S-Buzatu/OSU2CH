@@ -8,6 +8,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from pydub import AudioSegment
 from shutil import copyfile
+from IniWritter import write_ini
+from ChartWritter import write_song_data
 
 timing_point_list = []
 
@@ -30,6 +32,16 @@ class Timingpoint:
         self.beat_length = beat_length
         self.position = position
 
+def calc_pos( time ):
+
+    print("Timing point: Value: "+str(timing_point_list[timing_point_number].time)+" Number: "+str(timing_point_number))
+    coef = 768/timing_point_list[timing_point_number].beat_length
+    dtime = time - timing_point_list[timing_point_number].time
+    dpos = round(coef * dtime/4)
+    position = dpos + timing_point_list[timing_point_number].position
+    newline = "  "+str(position)+" = N "+str(lane)+" 0\n"
+
+    return newline
 
 
 for entry in os.listdir(osu_folder_path):
@@ -46,72 +58,16 @@ for entry in os.listdir(osu_folder_path):
             print(entry)
             map_name = entry
             map_name = map_name.replace(".osu","")
+
             if not os.path.exists(ch_folder_path + "/"+map_name):
                 os.makedirs(ch_folder_path + "/"+map_name)
 
             r = open(os.path.join(osu_folder_path, entry),'r', errors="ignore")
-            chart = open(ch_folder_path + "/"+map_name+'/notes.chart','w')
-            ini = open(ch_folder_path + "/"+map_name+'/song.ini','w')
             copyfile(ch_folder_path+"/song.ogg", ch_folder_path + "/"+map_name+"/song.ogg")
             file_lines = r.readlines()
-
-            ini.write("[Song]\n")
-            ini.write("name = "+map_name+"\n")
-            ini.write("artist = 1TEST\n")
-            ini.write("album = OSU\n")
-            ini.write("genre = Anime\n")
-            ini.write("year = 1\n")
-            ini.write("song_length = "+str(int(song.duration_seconds*1000))+"\n")
-            ini.write("count = 0\n")
-            ini.write("diff_band = -1\n")
-            ini.write("diff_guitar = -1\n")
-            ini.write("diff_bass = -1\n")
-            ini.write("diff_drums = -1\n")
-            ini.write("diff_keys = -1\n")
-            ini.write("diff_guitarghl = -1\n")
-            ini.write("diff_bassghl = -1\n")
-            ini.write("preview_start_time = 0\n")
-            ini.write("frets = 0\n")
-            ini.write("charter = OSU2CH\n")
-            ini.write("icon = 0\n")
-
-            ini.close()
-
-            chart.write("[Song]")
-            chart.write("\n")
-            chart.write("{")
-            chart.write("\n")
-            chart.write("Name = \"1TEST\"")
-            chart.write("\n")
-            chart.write("Artist = \"1TEST\"")
-            chart.write("\n")
-            chart.write("Charter = \"OSU2CH\"")
-            chart.write("\n")
-            chart.write("Album = \"1TEST\"")
-            chart.write("\n")
-            chart.write("Year = \", 1\"")
-            chart.write("\n")
-            chart.write("Offset = 0")
-            chart.write("\n")
-            chart.write("Resolution = 192")
-            chart.write("\n")
-            chart.write("Player2 = bass")
-            chart.write("\n")
-            chart.write("Difficulty = 0")
-            chart.write("\n")
-            chart.write("PreviewStart = 0")
-            chart.write("\n")
-            chart.write("PreviewEnd = 0")
-            chart.write("\n")
-            chart.write("Genre = \"Anime\"")
-            chart.write("\n")
-            chart.write("MediaType = \"cd\"")
-            chart.write("\n")
-            chart.write("MusicStream = \"song.ogg\"")
-            chart.write("\n")
-            chart.write("}")
-            chart.write("\n")
-
+            write_ini(ch_folder_path,map_name,song)
+            chart = open(ch_folder_path + "/"+map_name+'/notes.chart','w')
+            write_song_data(chart)
 
             for line in file_lines:
                 #Add timing 
@@ -146,8 +102,6 @@ for entry in os.listdir(osu_folder_path):
                         chart.write("}\n")
                         print("Timing points: "+str(len(timing_point_list)))
                  
-
-                
                 #Add notes
                 result = line.find("HitObjects")
                 if result > -1:
@@ -168,36 +122,17 @@ for entry in os.listdir(osu_folder_path):
                             lane=lane-1
                         if ((int(words[2]) >= timing_point_list[len(timing_point_list)-1].time)) :
                             print("Keep current timing point")
-                            print("Timing point: Value: "+str(timing_point_list[timing_point_number].time)+" Number: "+str(timing_point_number))
-                            coef = 768/timing_point_list[timing_point_number].beat_length
-                            dtime = int(words[2]) - timing_point_list[timing_point_number].time
-                            dpos = round(coef * dtime/4)
-                            position = dpos + timing_point_list[timing_point_number].position
-                            newline = "  "+str(position)+" = N "+str(lane)+" 0\n"
-                            chart.write(newline)
+                            chart.write(calc_pos(int(words[2])))
                         elif ((timing_point_list[timing_point_number].time <= int(words[2])) & (int(words[2]) < timing_point_list[timing_point_number+1].time)):
                             print("Keep current timing point")
-                            print("Timing point: Value: "+str(timing_point_list[timing_point_number].time)+" Number: "+str(timing_point_number))
-                            coef = 768/timing_point_list[timing_point_number].beat_length
-                            dtime = int(words[2]) - timing_point_list[timing_point_number].time
-                            dpos = round(coef * dtime/4)
-                            position = dpos + timing_point_list[timing_point_number].position
-                            newline = "  "+str(position)+" = N "+str(lane)+" 0\n"
-                            chart.write(newline)
+                            chart.write(calc_pos(int(words[2])))
                         else :
-                            #timing_point_number += 1
                             while (int(words[2]) >= timing_point_list[timing_point_number].time) :
                                 timing_point_number += 1
                                 if timing_point_number > len(timing_point_list)-1:
                                     break
                             timing_point_number -= 1
-                            print("Timing point added: Value: "+str(timing_point_list[timing_point_number].time)+" Number: "+str(timing_point_number))
-                            coef = 768/timing_point_list[timing_point_number].beat_length
-                            dtime = int(words[2]) - timing_point_list[timing_point_number].time
-                            dpos = round(coef * dtime/4)
-                            position = dpos + timing_point_list[timing_point_number].position
-                            newline = "  "+str(position)+" = N "+str(lane)+" 0\n"
-                            chart.write(newline)
+                            chart.write(calc_pos(int(words[2])))
             chart.write("}\n")
             r.close()
             chart.close()

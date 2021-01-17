@@ -13,6 +13,8 @@ Every map is made as a different CH song because you can't correlate the number 
 
 Known issues:
 
+-Converting every map an osu song has will put a few notes in the wrong position.
+
 -Notes seem sligthly off (might just be my imagination)
 
 -Sliders and Spinners are converted into a single note as opposed to a long note
